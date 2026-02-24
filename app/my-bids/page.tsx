@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import CompletionModal from '../components/CompletionModal';
 import { api } from '../lib/api';
 
 interface Bid {
@@ -29,6 +30,10 @@ export default function MyBidsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [completionModal, setCompletionModal] = useState<{ isOpen: boolean; jobId: string }>({
+    isOpen: false,
+    jobId: '',
+  });
 
   useEffect(() => {
     const checkAuthAndFetchBids = async () => {
@@ -131,12 +136,34 @@ export default function MyBidsPage() {
         <p className="text-sm text-gray-700 line-clamp-3">{bid.proposal}</p>
       </div>
 
-      <button
-        onClick={() => router.push(`/pro/${bid.job_id}`)}
-        className="text-blue-600 hover:underline text-sm font-semibold"
-      >
-        View Job Details →
-      </button>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <button
+          onClick={() => router.push(`/pro/${bid.job_id}`)}
+          className="text-blue-600 hover:underline text-sm font-semibold"
+        >
+          View Job Details →
+        </button>
+
+        {bid.status === 'accepted' && (
+          <button
+            onClick={() =>
+              setCompletionModal({ isOpen: true, jobId: bid.job_id })
+            }
+            style={{
+              padding: '8px 16px',
+              borderRadius: 6,
+              background: 'var(--green)',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            ✓ Mark Complete
+          </button>
+        )}
+      </div>
     </div>
   );
 
@@ -208,6 +235,15 @@ export default function MyBidsPage() {
           )}
         </div>
       </main>
+      <CompletionModal
+        isOpen={completionModal.isOpen}
+        jobId={completionModal.jobId}
+        onClose={() => setCompletionModal({ isOpen: false, jobId: '' })}
+        onSuccess={() => {
+          // Refresh bids list
+          window.location.reload();
+        }}
+      />
       <Footer />
     </div>
   );

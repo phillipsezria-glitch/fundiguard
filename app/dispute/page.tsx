@@ -5,12 +5,17 @@ import Footer from "../components/Footer";
 import Link from "next/link";
 import Button from "../components/ui/Button";
 import StatusPill from "../components/ui/StatusPill";
+import PhotoUploader from "../components/PhotoUploader";
 
 const steps = ["Open Dispute", "Upload Evidence", "Review by Team", "Resolution"];
 
 export default function DisputePage() {
     const [submitted, setSubmitted] = useState(false);
     const [type, setType] = useState("");
+    const [disputePhotos, setDisputePhotos] = useState<Array<{ url: string; path: string }>>([]);
+    const [description, setDescription] = useState("");
+    const [resolution, setResolution] = useState("refund");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (submitted) {
         return (
@@ -122,27 +127,34 @@ export default function DisputePage() {
 
                         {/* Description */}
                         <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Describe the issue *</label>
-                        <textarea placeholder="Tell us exactly what went wrong. Be as specific as possible — this helps us resolve faster." rows={4}
+                        <textarea 
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Tell us exactly what went wrong. Be as specific as possible — this helps us resolve faster." 
+                            rows={4}
                             style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "0.95rem", outline: "none", fontFamily: "Inter", marginBottom: 20, resize: "vertical" }} />
 
                         {/* Photo upload */}
-                        <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Upload Evidence Photos *</label>
-                        <div style={{
-                            border: "2px dashed #E53935", borderRadius: 10, padding: "32px", textAlign: "center",
-                            cursor: "pointer", marginBottom: 24, background: "#FFEBEE22",
-                        }}>
-                            <div style={{ fontSize: "2rem", marginBottom: 8 }}>📸</div>
-                            <div style={{ fontWeight: 500, marginBottom: 4 }}>Drop photos here or tap to upload</div>
-                            <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Before/after photos, screenshots of conversation, etc.</div>
-                        </div>
+                        <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>📸 Upload Evidence Photos *</label>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: 12 }}>
+                            Upload before/after photos, screenshots, or any evidence supporting your dispute
+                        </p>
+                        <PhotoUploader 
+                            maxFiles={10}
+                            maxFileSize={10 * 1024 * 1024}
+                            onPhotosSelected={setDisputePhotos}
+                        />
 
                         {/* Desired resolution */}
-                        <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>What resolution do you want? *</label>
-                        <select style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "1rem", outline: "none", fontFamily: "Inter", background: "white", marginBottom: 24 }}>
-                            <option>Full refund to M-Pesa</option>
-                            <option>Partial refund</option>
-                            <option>Send a replacement fundi to fix it</option>
-                            <option>I just want it documented</option>
+                        <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8, marginTop: 20 }}>What resolution do you want? *</label>
+                        <select 
+                            value={resolution}
+                            onChange={(e) => setResolution(e.target.value)}
+                            style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "1rem", outline: "none", fontFamily: "Inter", background: "white", marginBottom: 24 }}>
+                            <option value="refund">Full refund to M-Pesa</option>
+                            <option value="partial">Partial refund</option>
+                            <option value="replacement">Send a replacement fundi to fix it</option>
+                            <option value="document">I just want it documented</option>
                         </select>
 
                         {/* Warning */}
@@ -150,8 +162,44 @@ export default function DisputePage() {
                             ⚠️ <strong>Important:</strong> Submitting a false dispute is a violation of our Terms and may result in account suspension. Please only escalate genuine issues.
                         </div>
 
-                        <Button variant="danger" size="lg" fullWidth onClick={() => setSubmitted(true)} style={{ marginBottom: 8 }}>
-                            ⚖️ Submit Dispute
+                        <Button 
+                            variant="danger" 
+                            size="lg" 
+                            fullWidth 
+                            onClick={async () => {
+                                if (!type) {
+                                    alert("Please select a dispute type");
+                                    return;
+                                }
+                                if (!description.trim()) {
+                                    alert("Please describe the issue");
+                                    return;
+                                }
+                                if (disputePhotos.length === 0) {
+                                    alert("Please upload at least one evidence photo");
+                                    return;
+                                }
+                                setIsSubmitting(true);
+                                try {
+                                    // TODO: Call API to submit dispute
+                                    // const token = localStorage.getItem('authToken');
+                                    // await api.disputes.create(token, {
+                                    //     type,
+                                    //     description,
+                                    //     resolution,
+                                    //     evidence_photos: disputePhotos.map(p => p.url)
+                                    // });
+                                    setSubmitted(true);
+                                } catch (error) {
+                                    alert("Failed to submit dispute. Please try again.");
+                                } finally {
+                                    setIsSubmitting(false);
+                                }
+                            }}
+                            disabled={isSubmitting || !type || !description.trim() || disputePhotos.length === 0}
+                            style={{ marginBottom: 8 }}
+                        >
+                            {isSubmitting ? "⚖️ Submitting..." : "⚖️ Submit Dispute"}
                         </Button>
                         <p style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 14 }}>
                             Our team reviews all disputes within 48 hours. Payment remains frozen until resolved.

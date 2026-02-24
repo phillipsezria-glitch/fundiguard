@@ -15,6 +15,7 @@ export default function AuthPage() {
     
     // Form state
     const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
     const [otp, setOtp] = useState("");
@@ -61,6 +62,42 @@ export default function AuthPage() {
         return formatted.length === 12 && formatted.startsWith('254');
     };
 
+    // Email validation
+    const validateEmail = (e: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(e);
+    };
+
+    // Password strength check
+    const getPasswordStrength = (pass: string) => {
+        if (!pass) return { score: 0, label: 'No password' };
+        
+        let score = 0;
+        if (pass.length >= 8) score++;
+        if (pass.length >= 12) score++;
+        if (/[A-Z]/.test(pass)) score++;
+        if (/[a-z]/.test(pass)) score++;
+        if (/[0-9]/.test(pass)) score++;
+        if (/[!@#$%^&*]/.test(pass)) score++;
+
+        const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+        const colors = ['#ff4757', '#ff6348', '#ffa502', '#ffd93d', '#6bcf7f', '#00b894'];
+        
+        return {
+            score: Math.min(score, 5),
+            label: labels[Math.min(score, 5)] || 'Weak',
+            color: colors[Math.min(score, 5)] || '#ff4757',
+            requirements: {
+                length8: pass.length >= 8,
+                length12: pass.length >= 12,
+                uppercase: /[A-Z]/.test(pass),
+                lowercase: /[a-z]/.test(pass),
+                number: /[0-9]/.test(pass),
+                special: /[!@#$%^&*]/.test(pass),
+            }
+        };
+    };
+
     // Handle login/signup with password
     const handlePasswordAuth = async () => {
         setError("");
@@ -85,11 +122,14 @@ export default function AuthPage() {
             } else {
                 // Signup
                 if (!fullName.trim()) throw new Error('Full name required');
+                if (!email.trim()) throw new Error('Email address required');
+                if (!validateEmail(email)) throw new Error('Invalid email address');
                 if (!password) throw new Error('Password required');
                 if (password.length < 8) throw new Error('Password must be at least 8 characters');
                 
                 const response = await api.auth.register({
                     phone_number: formatPhoneNumber(phone),
+                    email: email.toLowerCase().trim(),
                     password,
                     full_name: fullName,
                     role,
@@ -119,6 +159,14 @@ export default function AuthPage() {
             
             if (tab === "signup" && !fullName.trim()) {
                 throw new Error('Full name required');
+            }
+
+            if (tab === "signup" && !email.trim()) {
+                throw new Error('Email address required');
+            }
+
+            if (tab === "signup" && !validateEmail(email)) {
+                throw new Error('Invalid email address');
             }
             
             await api.auth.requestOTP({
@@ -150,6 +198,7 @@ export default function AuthPage() {
                 otp_code: otp,
                 action: tab === "login" ? "login" : "register",
                 full_name: tab === "signup" ? fullName : undefined,
+                email: tab === "signup" ? email : undefined,
                 role: tab === "signup" ? role : undefined,
             });
             
@@ -251,17 +300,103 @@ export default function AuthPage() {
                                         <input value={fullName} onChange={e => setFullName(e.target.value)}
                                             placeholder="Grace Wanjiru" 
                                             style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "1rem", outline: "none", marginBottom: 16 }} />
+
+                                        <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Email Address <span style={{ color: "#c62828" }}>*</span></label>
+                                        <input value={email} onChange={e => setEmail(e.target.value)}
+                                            type="email"
+                                            placeholder="grace@example.com" 
+                                            style={{ 
+                                                width: "100%", 
+                                                padding: "12px 16px", 
+                                                borderRadius: 8, 
+                                                border: email && !validateEmail(email) ? "1px solid #c62828" : "1px solid var(--border)", 
+                                                fontSize: "1rem", 
+                                                outline: "none", 
+                                                marginBottom: 4
+                                            }} />
+                                        {email && !validateEmail(email) && (
+                                            <p style={{ fontSize: "0.75rem", color: "#c62828", marginBottom: 16 }}>⚠️ Enter a valid email address</p>
+                                        )}
+                                        {!email && (
+                                            <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: 16 }}>Required for account recovery</p>
+                                        )}
                                     </>
                                 )}
 
                                 {/* Password field */}
-                                <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Password</label>
+                                <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>
+                                    Password {tab === "signup" && <span style={{ color: "#c62828" }}>*</span>}
+                                </label>
                                 <input value={password} onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••" type="password"
-                                    style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "1rem", outline: "none", marginBottom: 16 }} />
-                                {tab === "signup" && <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: 16 }}>Minimum 8 characters</p>}
+                                    style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "1rem", outline: "none", marginBottom: 12 }} />
+                                
+                                {/* Password strength indicator (signup only) */}
+                                {tab === "signup" && password && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        {/* Strength bar */}
+                                        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                                            {[0, 1, 2, 3, 4].map((i) => (
+                                                <div
+                                                    key={i}
+                                                    style={{
+                                                        flex: 1,
+                                                        height: 4,
+                                                        background: i < getPasswordStrength(password).score ? getPasswordStrength(password).color : "#e0e0e0",
+                                                        borderRadius: 2,
+                                                        transition: "all 0.2s"
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
 
-                                <Button variant="primary" size="md" fullWidth onClick={handlePasswordAuth} disabled={loading}>
+                                        {/* Strength label */}
+                                        <p style={{ fontSize: "0.75rem", fontWeight: 600, color: getPasswordStrength(password).color, marginBottom: 8 }}>
+                                            Strength: {getPasswordStrength(password).label}
+                                        </p>
+
+                                        {/* Requirements checklist */}
+                                        <div style={{ fontSize: "0.75rem", background: "var(--bg)", padding: 8, borderRadius: 6 }}>
+                                            <p style={{ fontWeight: 600, marginBottom: 6, color: "var(--text-secondary)" }}>Password requirements:</p>
+                                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                                                {[
+                                                    { key: 'length8' as const, label: '8+ characters', emoji: getPasswordStrength(password).requirements!.length8 ? '✓' : '○' },
+                                                    { key: 'uppercase' as const, label: 'Uppercase (A-Z)', emoji: getPasswordStrength(password).requirements!.uppercase ? '✓' : '○' },
+                                                    { key: 'lowercase' as const, label: 'Lowercase (a-z)', emoji: getPasswordStrength(password).requirements!.lowercase ? '✓' : '○' },
+                                                    { key: 'number' as const, label: 'Number (0-9)', emoji: getPasswordStrength(password).requirements!.number ? '✓' : '○' },
+                                                    { key: 'special' as const, label: 'Special (!@#$%)', emoji: getPasswordStrength(password).requirements!.special ? '✓' : '○' },
+                                                    { key: 'length12' as const, label: '12+ chars (bonus)', emoji: getPasswordStrength(password).requirements!.length12 ? '⭐' : '○' },
+                                                ].map(({ key, label, emoji }) => (
+                                                    <div key={key} style={{
+                                                        color: (getPasswordStrength(password).requirements! as any)[key] ? 'var(--green)' : 'var(--text-secondary)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 4
+                                                    }}>
+                                                        <span>{emoji}</span>
+                                                        <span>{label}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {tab === "signup" && !password && (
+                                    <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: 16 }}>Create a strong password with uppercase, lowercase, numbers, and symbols</p>
+                                )}
+
+                                {tab === "login" && (
+                                    <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: 16 }}></p>
+                                )}
+
+                                <Button 
+                                    variant="primary" 
+                                    size="md" 
+                                    fullWidth 
+                                    onClick={handlePasswordAuth} 
+                                    disabled={loading || (tab === "signup" && (!email || !validateEmail(email)))}
+                                >
                                     {loading ? "Processing..." : (tab === "login" ? "🔓 Login" : "✅ Create Account")}
                                 </Button>
 

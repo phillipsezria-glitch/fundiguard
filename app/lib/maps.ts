@@ -273,20 +273,33 @@ export async function geocodeAddress(query: string): Promise<GeocodingResult[]> 
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
         query + ', Nairobi, Kenya'
-      )}&format=json&limit=5`
+      )}&format=json&limit=5`,
+      {
+        headers: {
+          'User-Agent': 'FundiGuard.ke Job Platform (https://fundiguard.ke)',
+        },
+      }
     );
 
-    if (!response.ok) throw new Error('Nominatim request failed');
+    if (!response.ok) {
+      console.warn('Nominatim returned status:', response.status);
+      return [];
+    }
 
     const data = await response.json();
+    if (!Array.isArray(data)) {
+      console.warn('Nominatim returned non-array response:', data);
+      return [];
+    }
+
     return data.map((result: any) => ({
-      name: result.display_name.split(',')[0],
+      name: result.display_name?.split(',')[0] || result.name || 'Unknown Location',
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon),
       type: result.type || 'address',
     }));
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.warn('Geocoding error (falling back to local):', error);
     return [];
   }
 }
@@ -311,20 +324,33 @@ export async function reverseGeocodeCoordinates(
 
     // Query Nominatim for address
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      {
+        headers: {
+          'User-Agent': 'FundiGuard.ke Job Platform (https://fundiguard.ke)',
+        },
+      }
     );
 
-    if (!response.ok) throw new Error('Nominatim reverse request failed');
+    if (!response.ok) {
+      console.warn('Nominatim reverse returned status:', response.status);
+      return null;
+    }
 
     const data = await response.json();
-    return data.address?.neighbourhood ||
+    
+    // Extract name with fallback chain
+    const addressName = data.address?.neighbourhood ||
       data.address?.suburb ||
       data.address?.city_district ||
       data.address?.town ||
+      data.address?.village ||
       data.name ||
       null;
+
+    return addressName;
   } catch (error) {
-    console.error('Reverse geocoding error:', error);
+    console.warn('Reverse geocoding error (falling back to local):', error);
     return null;
   }
 }

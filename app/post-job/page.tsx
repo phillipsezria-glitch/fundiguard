@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Link from "next/link";
-import PhotoUploader from "../components/ui/PhotoUploader";
+import PhotoUploader from "../components/PhotoUploader";
 import Button from "../components/ui/Button";
 import LocationPicker from "../components/LocationPicker";
+import { api, auth } from "@/app/lib/api";
 
 const steps = ["Job Details", "Location & Time", "Review & Pay"];
 
@@ -25,7 +27,10 @@ const categories = [
 ];
 
 export default function PostJobPage() {
+    const router = useRouter();
     const [step, setStep] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ url: string; path: string }>>([]);
     const [form, setForm] = useState({
         category: "",
         title: "",
@@ -42,9 +47,39 @@ export default function PostJobPage() {
     });
     const [submitted, setSubmitted] = useState(false);
 
-    const handleNext = () => {
-        if (step < 2) setStep(step + 1);
-        else setSubmitted(true);
+    const handleNext = async () => {
+        if (step < 2) {
+            setStep(step + 1);
+        } else {
+            // Submit job
+            setIsLoading(true);
+            try {
+                const token = auth.getToken();
+                if (!token) {
+                    alert("Please log in to post a job");
+                    router.push("/auth");
+                    return;
+                }
+
+                const jobData = {
+                    title: form.title,
+                    description: form.description,
+                    category: form.category,
+                    budget: parseInt(form.budget || "0"),
+                    location: form.location,
+                    urgency: form.urgency,
+                    photos: uploadedPhotos.map(p => p.url), // Send photo URLs
+                    ...(form.lat && form.lng && { latitude: form.lat, longitude: form.lng }),
+                };
+
+                await api.jobs.create(token, jobData);
+                setSubmitted(true);
+            } catch (error: any) {
+                alert(error.message || "Failed to post job");
+            } finally {
+                setIsLoading(false);
+            }
+        }
     };
 
     if (submitted) {
@@ -166,7 +201,11 @@ export default function PostJobPage() {
 
                                 {/* Photo upload */}
                                 <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Upload Photos (optional)</label>
-                                <PhotoUploader maxFiles={5} maxSizeMB={5} />
+                                <PhotoUploader 
+                                    maxFiles={5}
+                                    maxFileSize={10 * 1024 * 1024}
+                                    onPhotosSelected={(photos) => setUploadedPhotos(photos)}
+                                />
                             </div>
                         )}
 
@@ -294,12 +333,23 @@ export default function PostJobPage() {
                         {/* Navigation */}
                         <div style={{ display: "flex", gap: 12 }}>
                             {step > 0 && (
-                                <Button variant="secondary" size="md" onClick={() => setStep(step - 1)}>
+                                <Button 
+                                    variant="secondary" 
+                                    size="md" 
+                                    onClick={() => setStep(step - 1)}
+                                    disabled={isLoading}
+                                >
                                     ← Back
                                 </Button>
                             )}
-                            <Button variant="primary" size="lg" fullWidth onClick={handleNext}>
-                                {step === 2 ? "🔒 Pay via M-Pesa & Post Job" : "Continue →"}
+                            <Button 
+                                variant="primary" 
+                                size="lg" 
+                                fullWidth 
+                                onClick={handleNext}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "Processing..." : step === 2 ? "🔒 Pay via M-Pesa & Post Job" : "Continue →"}
                             </Button>
                         </div>
                     </div>

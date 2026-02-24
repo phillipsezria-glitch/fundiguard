@@ -26,37 +26,46 @@ export default function LocationPicker({
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle input change with geocoding
+  // Handle input change with geocoding (debounced)
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
 
-    if (newValue.length > 1) {
-      setLoading(true);
+    // Clear previous timeout
+    if (geocodeTimeoutRef.current) {
+      clearTimeout(geocodeTimeoutRef.current);
+    }
 
-      // Get local suggestions first
+    if (newValue.length > 1) {
+      // Get local suggestions first (instant)
       const localMatches = getLocationSuggestions(newValue);
       setSuggestions(localMatches);
-
-      // Get geocoding results
-      try {
-        const results = await geocodeAddress(newValue);
-        setGeocodingSuggestions(results.map(r => ({
-          name: r.name,
-          lat: r.lat,
-          lng: r.lng,
-        })));
-      } catch (error) {
-        console.error('Geocoding error:', error);
-      }
-
       setShowSuggestions(true);
-      setLoading(false);
+
+      // Debounce geocoding API call (300ms)
+      geocodeTimeoutRef.current = setTimeout(async () => {
+        setLoading(true);
+        try {
+          const results = await geocodeAddress(newValue);
+          setGeocodingSuggestions(results.map(r => ({
+            name: r.name,
+            lat: r.lat,
+            lng: r.lng,
+          })));
+        } catch (error) {
+          console.error('Geocoding error:', error);
+          setGeocodingSuggestions([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 300);
     } else {
       setSuggestions([]);
       setGeocodingSuggestions([]);
       setShowSuggestions(false);
+      setLoading(false);
     }
   };
 
@@ -145,7 +154,12 @@ export default function LocationPicker({
     };
 
     const timer = setTimeout(initializeMap, 100);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (geocodeTimeoutRef.current) {
+        clearTimeout(geocodeTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Update marker on location change

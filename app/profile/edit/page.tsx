@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { api } from '../../lib/api';
+import PhotoUploader from '../../components/PhotoUploader';
+import { api, auth } from '../../lib/api';
 
 interface EditProfileForm {
   full_name: string;
   location?: string;
   bio?: string;
+  profile_photo_url?: string;
 }
 
 export default function EditProfilePage() {
@@ -18,7 +20,9 @@ export default function EditProfilePage() {
     full_name: '',
     location: '',
     bio: '',
+    profile_photo_url: '',
   });
+  const [profilePhotos, setProfilePhotos] = useState<Array<{ url: string; path: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -71,13 +75,24 @@ export default function EditProfilePage() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem('authToken');
+      const token = auth.getToken();
       if (!token) {
         throw new Error('Please login to update your profile');
       }
 
+      // Prepare profile data
+      const profileData: any = {
+        full_name: formData.full_name,
+        location: formData.location,
+        bio: formData.bio,
+      };
+
+      // Add profile photo if one was uploaded
+      if (profilePhotos.length > 0) {
+        profileData.profile_photo_url = profilePhotos[0].url;
+      }
+
       // Call profile update API endpoint
-      // Note: You'll need to add this endpoint to your backend
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/users/profile`,
         {
@@ -86,7 +101,7 @@ export default function EditProfilePage() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(profileData),
         }
       );
 
@@ -166,6 +181,47 @@ export default function EditProfilePage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Profile Photo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📷 Profile Photo
+                </label>
+                {formData.profile_photo_url && (
+                  <div style={{ marginBottom: 16 }}>
+                    <img
+                      src={formData.profile_photo_url}
+                      alt="Current profile"
+                      style={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: 8,
+                        objectFit: 'cover',
+                        border: '2px solid var(--border)',
+                      }}
+                    />
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 8 }}>
+                      Current profile photo
+                    </p>
+                  </div>
+                )}
+                <PhotoUploader
+                  maxFiles={1}
+                  maxFileSize={10 * 1024 * 1024}
+                  onPhotosSelected={(photos) => {
+                    setProfilePhotos(photos);
+                    if (photos.length > 0) {
+                      setFormData(prev => ({
+                        ...prev,
+                        profile_photo_url: photos[0].url,
+                      }));
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  JPG, PNG, or GIF. Max 10MB. Square images work best (1:1 aspect ratio).
+                </p>
+              </div>
+
               {/* Full Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
