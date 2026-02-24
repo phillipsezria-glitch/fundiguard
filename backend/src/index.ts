@@ -21,6 +21,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   'http://127.0.0.1:3000',
+  'https://fundiguard.vercel.app',
   process.env.FRONTEND_URL,
   process.env.PRODUCTION_URL,
 ].filter(Boolean);
