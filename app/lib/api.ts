@@ -202,8 +202,8 @@ export const api = {
         submitCompletion: async (token: string, bookingId: string, data: {
             completion_photos: string[];
             pro_notes?: string;
-        }) => apiCall<any>(`/bookings/${bookingId}/completion`, {
-            method: 'PUT',
+        }) => apiCall<any>(`/bookings/${bookingId}/complete`, {
+            method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
