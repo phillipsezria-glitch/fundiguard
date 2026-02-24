@@ -1,0 +1,43 @@
+{
+    "name": "FundiGuard",
+    "short_name": "FundiGuard",
+    "description": "Kenya's most trusted on-demand fundi services marketplace with M-Pesa escrow and job insurance.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#003320",
+    "theme_color": "#00C853",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "business",
+        "utilities"
+    ],
+    "lang": "en-KE",
+    "shortcuts": [
+        {
+            "name": "Find a Fundi",
+            "short_name": "Browse",
+            "url": "/browse",
+            "description": "Browse verified fundis near you"
+        },
+        {
+            "name": "Post a Job",
+            "short_name": "Post Job",
+            "url": "/post-job",
+            "description": "Post your job in 2 minutes"
+        }
+    ]
+}
