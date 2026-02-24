@@ -194,7 +194,7 @@ export default function MyBidsPage() {
                 You haven't submitted any bids yet.
               </p>
               <button
-                onClick={() => router.push('/browse')}
+                onClick={() => router.push('/browse-jobs')}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md"
               >
                 Browse Jobs

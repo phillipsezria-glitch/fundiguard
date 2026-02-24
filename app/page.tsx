@@ -360,7 +360,7 @@ export default function Home() {
                     rating={4.9}
                     ratingCount={[45, 78, 92, 56, 123][i] || 65}
                     photo={undefined}
-                    onClick={() => window.location.href = '/browse'}
+                    onClick={() => window.location.href = '/browse-jobs'}
                   />
                 </div>
               ))}

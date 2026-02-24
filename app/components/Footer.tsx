@@ -8,7 +8,7 @@ const footerLinks = {
         { label: "Press", href: "/press" },
     ],
     "Services": [
-        { label: "Browse Fundis", href: "/browse" },
+        { label: "Browse Fundis", href: "/browse-jobs" },
         { label: "Post a Job", href: "/post-job" },
         { label: "Job Insurance", href: "/insurance" },
         { label: "Dispute Center", href: "/dispute" },
