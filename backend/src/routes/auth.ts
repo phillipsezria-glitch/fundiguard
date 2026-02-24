@@ -25,4 +25,9 @@ router.post('/request-password-reset', authController.requestPasswordReset);
 // Reset password with OTP
 router.post('/reset-password', authController.resetPassword);
 
+// Health check
+router.get('/health', (_req, res) => {
+  res.json({ status: 'ok', service: 'auth', timestamp: new Date().toISOString() });
+});
+
 export default router;
