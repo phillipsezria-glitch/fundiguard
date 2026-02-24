@@ -42,7 +42,7 @@ export default function MyBidsPage() {
     const checkAuthAndFetchBids = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
 
         if (!token) {
           setIsLoggedIn(false);

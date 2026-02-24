@@ -85,7 +85,7 @@ export default function BidsList({ jobId, clientId, onAcceptBid, onRejectBid }: 
 
   const handleRejectBid = async (bidId: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         setError('Please login to manage bids');
         return;
