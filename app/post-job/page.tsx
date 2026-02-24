@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -8,6 +8,7 @@ import PhotoUploader from "../components/PhotoUploader";
 import Button from "../components/ui/Button";
 import LocationPicker from "../components/LocationPicker";
 import { api, auth } from "@/app/lib/api";
+import { useAuthProtected } from "@/app/lib/useAuthProtected";
 
 const steps = ["Job Details", "Location & Time", "Review & Pay"];
 
@@ -27,6 +28,8 @@ const categories = [
 ];
 
 export default function PostJobPage() {
+    useAuthProtected(); // Protect this route
+    
     const router = useRouter();
     const [step, setStep] = useState(0);
     const [isLoading, setIsLoading] = useState(false);

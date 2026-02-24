@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import Link from "next/link";
 import Button from "../components/ui/Button";
 import StatusPill from "../components/ui/StatusPill";
+import { useAuthProtected } from "../lib/useAuthProtected";
 
 const leads = [
     { id: 1, title: "Fix leaking kitchen pipe", client: "Grace W.", location: "South C", budget: 2500, time: "5 mins ago", urgent: true },
@@ -16,6 +17,8 @@ const weeklyData = [40, 65, 55, 80, 72, 90, 68];
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function ProDashboardPage() {
+    useAuthProtected(); // Protect this route
+    
     const [activeTab, setActiveTab] = useState("leads");
 
     return (

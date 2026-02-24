@@ -6,6 +6,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import PhotoUploader from '../../components/PhotoUploader';
 import { api, auth } from '../../lib/api';
+import { useAuthProtected } from '../../lib/useAuthProtected';
 
 interface EditProfileForm {
   full_name: string;
@@ -15,6 +16,8 @@ interface EditProfileForm {
 }
 
 export default function EditProfilePage() {
+  useAuthProtected(); // Protect this route
+  
   const router = useRouter();
   const [formData, setFormData] = useState<EditProfileForm>({
     full_name: '',

@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CompletionModal from '../components/CompletionModal';
 import { api } from '../lib/api';
+import { useAuthProtected } from '../lib/useAuthProtected';
 
 interface Bid {
   id: string;
@@ -25,6 +26,8 @@ interface Bid {
 }
 
 export default function MyBidsPage() {
+  useAuthProtected(); // Protect this route
+  
   const router = useRouter();
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);

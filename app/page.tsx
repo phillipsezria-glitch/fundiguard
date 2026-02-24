@@ -195,7 +195,7 @@ export default function Home() {
                 fontFamily: "Inter", color: "#212121", background: "transparent",
               }}
             />
-            <Link href="/browse" className="btn-primary" style={{ borderRadius: 12, whiteSpace: "nowrap" }}>
+            <Link href="/browse-jobs" className="btn-primary" style={{ borderRadius: 12, whiteSpace: "nowrap" }}>
               Find Fundi
             </Link>
           </div>
@@ -322,7 +322,7 @@ export default function Home() {
               ))}
           </div>
           <div style={{ textAlign: "center", marginTop: 40 }}>
-            <Link href="/browse" className="btn-primary" style={{ padding: "14px 40px" }}>
+            <Link href="/browse-jobs" className="btn-primary" style={{ padding: "14px 40px" }}>
               View All Services →
             </Link>
           </div>
@@ -339,7 +339,7 @@ export default function Home() {
               </h2>
               <p className="section-subtitle" style={{ marginBottom: 0 }}>Real jobs posted right now in Nairobi</p>
             </div>
-            <Link href="/browse" style={{ color: "var(--green)", fontWeight: 600, fontSize: "0.9rem" }}>View all jobs →</Link>
+            <Link href="/browse-jobs" style={{ color: "var(--green)", fontWeight: 600, fontSize: "0.9rem" }}>View all jobs →</Link>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
               {displayJobs.map((job, i) => (
@@ -435,7 +435,7 @@ export default function Home() {
             First booking? Get insurance free for 30 days.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/browse" style={{
+            <Link href="/browse-jobs" style={{
               background: "white", color: "var(--green)", padding: "14px 36px",
               borderRadius: 10, fontWeight: 700, fontSize: "1rem",
               display: "inline-flex", alignItems: "center", gap: 8,

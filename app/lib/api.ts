@@ -1,8 +1,6 @@
 // API Client for FundiGuard Backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001' 
-    : 'https://backend-md7hvrnmf-phillips-projects-442c0a01.vercel.app');
+// IMPORTANT: Only use localhost in development, configure proper API URL for production
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface AuthResponse {
     token: string;
