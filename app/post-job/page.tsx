@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import Link from "next/link";
 import PhotoUploader from "../components/ui/PhotoUploader";
 import Button from "../components/ui/Button";
+import LocationPicker from "../components/LocationPicker";
 
 const steps = ["Job Details", "Location & Time", "Review & Pay"];
 
@@ -32,6 +33,8 @@ export default function PostJobPage() {
         budget: "",
         urgency: "normal",
         location: "",
+        lat: null as number | null,
+        lng: null as number | null,
         date: "",
         time: "",
         addInsurance: false,
@@ -172,29 +175,18 @@ export default function PostJobPage() {
                             <div>
                                 <h2 style={{ fontFamily: "Poppins", fontWeight: 700, marginBottom: 24 }}>📍 Location & Time</h2>
 
-                                <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Your Location *</label>
-                                <div style={{ position: "relative", marginBottom: 20 }}>
-                                    <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>📍</span>
-                                    <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
-                                        placeholder="e.g. South C, Phase 3, House 42"
-                                        style={{ width: "100%", padding: "12px 16px 12px 40px", borderRadius: 8, border: "1px solid var(--border)", fontSize: "1rem", outline: "none", fontFamily: "Inter" }} />
-                                </div>
+                                {/* Interactive Location Picker Map */}
+                                <LocationPicker
+                                    value={form.location}
+                                    onChange={(location) => setForm({ ...form, location })}
+                                    onCoordinatesChange={(coords) => {
+                                        if (coords) {
+                                            setForm({ ...form, lat: coords.lat, lng: coords.lng });
+                                        }
+                                    }}
+                                />
 
-                                {/* Map placeholder */}
-                                <div style={{
-                                    background: "linear-gradient(135deg, #E8F5E9, #E3F2FD)",
-                                    borderRadius: 12, height: 200, marginBottom: 24,
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    border: "1px solid var(--border)",
-                                }}>
-                                    <div style={{ textAlign: "center", color: "var(--text-secondary)" }}>
-                                        <div style={{ fontSize: "2.5rem", marginBottom: 8 }}>🗺️</div>
-                                        <div style={{ fontWeight: 500 }}>Interactive Map</div>
-                                        <div style={{ fontSize: "0.8rem" }}>Tap to pin your exact location</div>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24, marginTop: 24 }}>
                                     <div>
                                         <label style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: 8 }}>Preferred Date *</label>
                                         <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })}
