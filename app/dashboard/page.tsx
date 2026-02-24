@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import StatusPill from "../components/ui/StatusPill";
 import RatingStars from "../components/ui/RatingStars";
 import Modal from "../components/ui/Modal";
+import BidsList from "../components/BidsList";
 
 const activeJobs = [
     { id: 1, title: "Fix leaking kitchen pipe", fundi: "James Mwangi", status: "in_progress", progress: 60, amount: 2500, date: "Feb 20, 2026", category: "Plumbing", fundiAvatar: "JM", avatarBg: "#1565C0" },
@@ -30,6 +31,7 @@ const statusColors: Record<string, { bg: string; color: string; label: string }>
 export default function DashboardPage() {
     const [tab, setTab] = useState("active");
     const [showReleaseModal, setShowReleaseModal] = useState(false);
+    const [expandedJobId, setExpandedJobId] = useState<number | null>(null);
 
     return (
         <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -74,7 +76,7 @@ export default function DashboardPage() {
 
                 {/* Tabs */}
                 <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border)", marginBottom: 24 }}>
-                    {[["active", "⚡ Active Jobs"], ["past", "✅ Past Jobs"], ["saved", "❤️ Saved Fundis"]].map(([key, label]) => (
+                    {[["active", "⚡ Active Jobs"], ["bids", "🤝 Bids Received"], ["past", "✅ Past Jobs"], ["saved", "❤️ Saved Fundis"]].map(([key, label]) => (
                         <button key={key} onClick={() => setTab(key)} style={{
                             padding: "12px 20px", border: "none", background: "none", cursor: "pointer",
                             fontWeight: 600, fontSize: "0.88rem",
@@ -89,51 +91,105 @@ export default function DashboardPage() {
                 {tab === "active" && (
                     <div style={{ display: "grid", gap: 16 }}>
                         {activeJobs.map(job => (
-                            <div key={job.id} className="card" style={{ padding: "24px", overflow: "hidden" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-                                    <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                                        <div style={{ width: 48, height: 48, borderRadius: "50%", background: job.avatarBg, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>{job.fundiAvatar}</div>
-                                        <div>
-                                            <h3 style={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1rem", marginBottom: 4 }}>{job.title}</h3>
-                                            <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Fundi: <strong>{job.fundi}</strong> • {job.date}</div>
+                            <div key={job.id}>
+                                <div className="card" style={{ padding: "24px", overflow: "hidden" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+                                        <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flex: 1 }}>
+                                            <div style={{ width: 48, height: 48, borderRadius: "50%", background: job.avatarBg, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>{job.fundiAvatar}</div>
+                                            <div style={{ flex: 1 }}>
+                                                <h3 style={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1rem", marginBottom: 4 }}>{job.title}</h3>
+                                                <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Fundi: <strong>{job.fundi}</strong> • {job.date}</div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                            <span style={{ fontFamily: "Poppins", fontWeight: 700, color: "var(--green)" }}>KSh {job.amount.toLocaleString()}</span>
+                                                <StatusPill
+                                                    type={job.status === "in_progress" ? "pending" : job.status === "awaiting_approval" ? "urgent" : job.status === "scheduled" ? "success" : "verified"}
+                                                    label={statusColors[job.status].label}
+                                                />
                                         </div>
                                     </div>
-                                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                                        <span style={{ fontFamily: "Poppins", fontWeight: 700, color: "var(--green)" }}>KSh {job.amount.toLocaleString()}</span>
-                                            <StatusPill
-                                                type={job.status === "in_progress" ? "pending" : job.status === "awaiting_approval" ? "urgent" : job.status === "scheduled" ? "success" : "verified"}
-                                                label={statusColors[job.status].label}
-                                            />
+                                    {/* Progress bar */}
+                                    <div style={{ marginBottom: 16 }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                                            <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Job progress</span>
+                                            <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>{job.progress}%</span>
+                                        </div>
+                                        <div className="progress-bar">
+                                            <div className="progress-bar-fill" style={{ width: `${job.progress}%` }} />
+                                        </div>
                                     </div>
-                                </div>
-                                {/* Progress bar */}
-                                <div style={{ marginBottom: 16 }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                                        <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Job progress</span>
-                                        <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>{job.progress}%</span>
-                                    </div>
-                                    <div className="progress-bar">
-                                        <div className="progress-bar-fill" style={{ width: `${job.progress}%` }} />
-                                    </div>
-                                </div>
-                                {/* Actions */}
-                                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                    {job.status === "awaiting_approval" && (
-                                        <Button variant="primary" size="md" onClick={() => setShowReleaseModal(true)}>
-                                            ✅ Approve & Release Payment
+                                    {/* Actions */}
+                                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                                        {job.status === "awaiting_approval" && (
+                                            <Button variant="primary" size="md" onClick={() => setShowReleaseModal(true)}>
+                                                ✅ Approve & Release Payment
+                                            </Button>
+                                        )}
+                                        <Button variant="secondary" size="sm">
+                                            📞 Contact Fundi
                                         </Button>
-                                    )}
-                                    <Button variant="secondary" size="sm">
-                                        📞 Contact Fundi
-                                    </Button>
-                                    <Link href="/dispute">
-                                        <Button variant="danger" size="sm">
-                                            ⚠️ Raise Dispute
-                                        </Button>
-                                    </Link>
+                                        <Link href="/dispute">
+                                            <Button variant="danger" size="sm">
+                                                ⚠️ Raise Dispute
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                    {/* View Bids button */}
+                                    <button
+                                        onClick={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+                                        style={{
+                                            padding: "8px 12px",
+                                            border: "1px solid #ccc",
+                                            background: "transparent",
+                                            borderRadius: 6,
+                                            cursor: "pointer",
+                                            fontSize: "0.85rem",
+                                            color: "var(--green)",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {expandedJobId === job.id ? "Hide Bids ▲" : "View Bids ▼"}
+                                    </button>
                                 </div>
+                                {/* Bids section */}
+                                {expandedJobId === job.id && (
+                                    <div style={{ marginTop: 16, padding: "0" }}>
+                                        <BidsList jobId={job.id.toString()} clientId={localStorage.getItem('userId') || undefined} />
+                                    </div>
+                                )}
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Bids Received Tab */}
+                {tab === "bids" && (
+                    <div>
+                        <h2 style={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.4rem", marginBottom: 24 }}>
+                            💼 All Bids Received
+                        </h2>
+                        {activeJobs.length === 0 ? (
+                            <div className="card" style={{ padding: "60px 24px", textAlign: "center" }}>
+                                <div style={{ fontSize: "3rem", marginBottom: 16 }}>📭</div>
+                                <h3 style={{ fontFamily: "Poppins", fontWeight: 700, marginBottom: 8 }}>No bids yet</h3>
+                                <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>Post a job to start receiving bids from verified fundis!</p>
+                                <Link href="/post-job">
+                                    <Button variant="primary" size="md">+ Post New Job</Button>
+                                </Link>
+                            </div>
+                        ) : (
+                            <div style={{ display: "grid", gap: 24 }}>
+                                {activeJobs.map(job => (
+                                    <div key={job.id}>
+                                        <h3 style={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.1rem", marginBottom: 16, paddingBottom: 12, borderBottom: "2px solid var(--border)" }}>
+                                            📍 {job.title}
+                                        </h3>
+                                        <BidsList jobId={job.id.toString()} clientId={localStorage.getItem('userId') || undefined} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 

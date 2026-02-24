@@ -127,6 +127,52 @@ export const api = {
             }),
     },
 
+    // Bids endpoints
+    bids: {
+        create: async (token: string, data: {
+            job_id: string;
+            proposed_price: number;
+            timeline: number;
+            proposal: string;
+        }) => apiCall<any>('/bids', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        }),
+
+        getForJob: async (jobId: string) =>
+            apiCall<any[]>(`/bids?job_id=${jobId}`, {
+                method: 'GET',
+            }),
+
+        getMyBids: async (token: string) =>
+            apiCall<any[]>('/bids/my-bids', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            }),
+
+        accept: async (token: string, bidId: string) =>
+            apiCall<any>('/bids/accept', {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ bid_id: bidId }),
+            }),
+
+        reject: async (token: string, bidId: string) =>
+            apiCall<any>('/bids/reject', {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ bid_id: bidId }),
+            }),
+    },
+
     // User endpoints
     users: {
         getProfile: async (token: string) =>

@@ -6,6 +6,8 @@ import jobRoutes from './routes/jobs';
 import professionalRoutes from './routes/professionals';
 import bookingRoutes from './routes/bookings';
 import paymentRoutes from './routes/payments';
+import bidRoutes from './routes/bidRoutes';
+import userRoutes from './routes/users';
 import { errorHandler } from './middleware/auth';
 
 dotenv.config();
@@ -24,6 +26,8 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/professionals', professionalRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/bids', bidRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

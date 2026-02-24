@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
     { href: "/browse", label: "Browse Services" },
@@ -11,8 +12,22 @@ const navLinks = [
 ];
 
 export default function Header() {
+    const router = useRouter();
     const [menuOpen, setMenuOpen] = useState(false);
     const [lang, setLang] = useState<"EN" | "SW">("EN");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        setIsLoggedIn(!!token);
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        setIsLoggedIn(false);
+        router.push('/');
+    };
 
     return (
         <header style={{
@@ -67,16 +82,34 @@ export default function Header() {
                         }}
                     >{lang === "EN" ? "🇰🇪 SW" : "🇺🇸 EN"}</button>
 
-                    {/* Login */}
-                    <Link href="/auth" className="hide-mobile" style={{
-                        padding: "8px 18px", borderRadius: 8, fontWeight: 600, fontSize: "0.9rem",
-                        color: "var(--text)", border: "1px solid var(--border)",
-                    }}>Login</Link>
+                    {/* Login/Profile */}
+                    {isLoggedIn ? (
+                        <>
+                            <Link href="/profile" className="hide-mobile" style={{
+                                padding: "8px 18px", borderRadius: 8, fontWeight: 600, fontSize: "0.9rem",
+                                color: "var(--text)", border: "1px solid var(--border)",
+                            }}>👤 Profile</Link>
 
-                    {/* Signup */}
-                    <Link href="/auth?tab=signup" className="btn-primary hide-mobile" style={{ padding: "8px 20px", fontSize: "0.9rem" }}>
-                        Get Started
-                    </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="hide-mobile btn-primary"
+                                style={{ padding: "8px 20px", fontSize: "0.9rem", border: "none", cursor: "pointer" }}
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link href="/auth" className="hide-mobile" style={{
+                                padding: "8px 18px", borderRadius: 8, fontWeight: 600, fontSize: "0.9rem",
+                                color: "var(--text)", border: "1px solid var(--border)",
+                            }}>Login</Link>
+
+                            <Link href="/auth?tab=signup" className="btn-primary hide-mobile" style={{ padding: "8px 20px", fontSize: "0.9rem" }}>
+                                Get Started
+                            </Link>
+                        </>
+                    )}
 
                     {/* Mobile hamburger */}
                     <button
@@ -108,8 +141,26 @@ export default function Header() {
                         }}>{l.label}</Link>
                     ))}
                     <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-                        <Link href="/auth" className="btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "10px 0" }}>Login</Link>
-                        <Link href="/auth?tab=signup" className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "10px 0" }}>Sign Up</Link>
+                        {isLoggedIn ? (
+                            <>
+                                <Link href="/profile" className="btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "10px 0" }} onClick={() => setMenuOpen(false)}>👤 Profile</Link>
+                                <button
+                                    onClick={() => {
+                                        handleLogout();
+                                        setMenuOpen(false);
+                                    }}
+                                    className="btn-primary"
+                                    style={{ flex: 1, padding: "10px 0", border: "none", cursor: "pointer" }}
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/auth" className="btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "10px 0" }}>Login</Link>
+                                <Link href="/auth?tab=signup" className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "10px 0" }}>Sign Up</Link>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
