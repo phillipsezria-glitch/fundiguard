@@ -47,7 +47,6 @@ A comprehensive Next.js + Express.js platform connecting clients with skilled pr
 - **Payments**: M-Pesa integration
 
 ### DevOps
-- **Hosting**: Vercel (frontend), Node.js (backend)
 - **Database**: Supabase PostgreSQL
 - **Storage**: Supabase Storage
 - **Git**: GitHub
@@ -329,13 +328,7 @@ Or use the provided migration file:
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
-```bash
-# Connected to GitHub - automatic deployment on push to master
-# Environment variables set in Vercel dashboard
-```
-
-### Backend (Node.js Server)
+### Backend Deployment
 ```bash
 cd backend
 npm run build
@@ -382,7 +375,6 @@ MIT License - See LICENSE file for details
 ## 🙏 Acknowledgments
 
 - Supabase for database and storage
-- Vercel for frontend hosting
 - Mapbox for mapping services
 - Twilio for SMS/OTP services
 - M-Pesa for payment processing
