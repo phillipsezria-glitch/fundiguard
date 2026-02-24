@@ -16,9 +16,7 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "FRONTEND_URL": "@frontend_url",
-    "PRODUCTION_URL": "@production_url"
+    "NODE_ENV": "production"
   },
   "public": false
 }
