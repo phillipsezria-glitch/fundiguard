@@ -9,7 +9,8 @@ import { supabase } from '../config/supabase';
  */
 export const createJob = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userId) {
+    const userId = req.userId || req.user?.userId;
+    if (!userId) {
       res.status(401).json({ error: 'Not authenticated' });
       return;
     }
@@ -22,7 +23,7 @@ export const createJob = async (req: AuthenticatedRequest, res: Response): Promi
     }
 
     const job = await jobService.createJob({
-      client_id: req.userId,
+      client_id: userId,
       title,
       category,
       description,
@@ -120,14 +121,15 @@ export const getJobsByCategory = async (req: Request, res: Response): Promise<vo
  */
 export const getUserJobs = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userId) {
+    const userId = req.userId || req.user?.userId;
+    if (!userId) {
       res.status(401).json({ error: 'Not authenticated' });
       return;
     }
 
     const { status } = req.query;
 
-    const jobs = await jobService.getJobsByClient(req.userId, status as string);
+    const jobs = await jobService.getJobsByClient(userId, status as string);
 
     res.json(jobs);
   } catch (error: any) {
@@ -141,7 +143,8 @@ export const getUserJobs = async (req: AuthenticatedRequest, res: Response): Pro
  */
 export const updateJob = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userId) {
+    const userId = req.userId || req.user?.userId;
+    if (!userId) {
       res.status(401).json({ error: 'Not authenticated' });
       return;
     }
@@ -156,7 +159,7 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response): Promi
       .eq('id', id)
       .single();
 
-    if (!job || job.client_id !== req.userId) {
+    if (!job || job.client_id !== userId) {
       res.status(403).json({ error: 'Unauthorized: You do not own this job' });
       return;
     }
@@ -175,14 +178,15 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response): Promi
  */
 export const deleteJob = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userId) {
+    const userId = req.userId || req.user?.userId;
+    if (!userId) {
       res.status(401).json({ error: 'Not authenticated' });
       return;
     }
 
     const { id } = req.params;
 
-    const deleted = await jobService.deleteJob(id, req.userId);
+    const deleted = await jobService.deleteJob(id, userId);
 
     res.json(deleted);
   } catch (error: any) {
@@ -255,6 +259,3 @@ export const getTrendingJobs = async (req: Request, res: Response): Promise<void
     res.status(500).json({ error: error.message });
   }
 };
-
-// Import supabase for middleware verification
-import { supabase } from '../config/supabase';

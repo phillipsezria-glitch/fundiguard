@@ -10,27 +10,40 @@ const router = Router();
  * Body: { phone_number: string, role: 'client' | 'pro' }
  * Headers: Authorization: Bearer <CLERK_TOKEN>
  */
-router.post('/sync-clerk', clerkAuthMiddleware, async (req, res) => {
+router.post('/sync-clerk', clerkAuthMiddleware, async (req, res): Promise<void> => {
   try {
     const { role, phone_number } = req.body;
-    const clerkUserId = req.userId;
-    const clerkUser = req.user;
+    let clerkUserId = req.userId;
+    let clerkUser = (req as any).user;
+
+    // Fallback if userId is not set
+    if (!clerkUserId && clerkUser?.userId) {
+      clerkUserId = clerkUser.userId;
+    }
+
+    if (!clerkUserId || !clerkUser) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
 
     // Validate required fields
     if (!phone_number) {
-      return res.status(400).json({ error: 'Phone number is required' });
+      res.status(400).json({ error: 'Phone number is required' });
+      return;
     }
 
     if (!role || !['client', 'pro'].includes(role)) {
-      return res.status(400).json({ error: 'Role must be "client" or "pro"' });
+      res.status(400).json({ error: 'Role must be "client" or "pro"' });
+      return;
     }
 
     // Validate Kenyan phone number format
     const phoneRegex = /^\+?254\d{9}$/;
     if (!phoneRegex.test(phone_number.replace(/\s/g, ''))) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid phone number. Use format: +254712345678 or 0712345678',
       });
+      return;
     }
 
     // Normalize phone number to international format
@@ -64,13 +77,15 @@ router.post('/sync-clerk', clerkAuthMiddleware, async (req, res) => {
 
     if (error) {
       console.error('Supabase upsert error:', error);
-      return res.status(500).json({
+      res.status(500).json({
         error: error.message || 'Failed to sync user to database',
       });
+      return;
     }
 
     if (!data) {
-      return res.status(500).json({ error: 'Failed to retrieve synced user' });
+      res.status(500).json({ error: 'Failed to retrieve synced user' });
+      return;
     }
 
     res.json({
@@ -96,9 +111,19 @@ router.post('/sync-clerk', clerkAuthMiddleware, async (req, res) => {
  * GET /api/users/me
  * Headers: Authorization: Bearer <CLERK_TOKEN>
  */
-router.get('/me', clerkAuthMiddleware, async (req, res) => {
+router.get('/me', clerkAuthMiddleware, async (req, res): Promise<void> => {
   try {
-    const clerkUserId = req.userId;
+    let clerkUserId = req.userId;
+    
+    // Fallback if userId is not set
+    if (!clerkUserId && (req as any).user?.userId) {
+      clerkUserId = (req as any).user.userId;
+    }
+
+    if (!clerkUserId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
 
     // Look up user in Supabase by clerk_user_id
     const { data, error } = await supabase
@@ -109,7 +134,8 @@ router.get('/me', clerkAuthMiddleware, async (req, res) => {
 
     if (error) {
       console.error('Supabase select error:', error);
-      return res.status(404).json({ error: 'User not found in database' });
+      res.status(404).json({ error: 'User not found in database' });
+      return;
     }
 
     res.json({
@@ -127,9 +153,20 @@ router.get('/me', clerkAuthMiddleware, async (req, res) => {
  * Body: { full_name?, phone_number?, profile_image?, bio? }
  * Headers: Authorization: Bearer <CLERK_TOKEN>
  */
-router.put('/me', clerkAuthMiddleware, async (req, res) => {
+router.put('/me', clerkAuthMiddleware, async (req, res): Promise<void> => {
   try {
-    const clerkUserId = req.userId;
+    let clerkUserId = req.userId;
+    
+    // Fallback if userId is not set
+    if (!clerkUserId && (req as any).user?.userId) {
+      clerkUserId = (req as any).user.userId;
+    }
+
+    if (!clerkUserId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
     const { full_name, phone_number, profile_image, bio } = req.body;
 
     // Build update object - only include provided fields
@@ -139,14 +176,16 @@ router.put('/me', clerkAuthMiddleware, async (req, res) => {
       // Validate phone format
       const phoneRegex = /^\+?254\d{9}$/;
       if (!phoneRegex.test(phone_number.replace(/\s/g, ''))) {
-        return res.status(400).json({ error: 'Invalid phone number format' });
+        res.status(400).json({ error: 'Invalid phone number format' });
+        return;
       }
       updates.phone_number = phone_number;
     }
     if (profile_image) updates.profile_image = profile_image;
     if (bio) updates.bio = bio;
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'No fields to update' });
+      res.status(400).json({ error: 'No fields to update' });
+      return;
     }
 
     updates.updated_at = new Date().toISOString();
@@ -161,7 +200,8 @@ router.put('/me', clerkAuthMiddleware, async (req, res) => {
 
     if (error) {
       console.error('Supabase update error:', error);
-      return res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
+      return;
     }
 
     res.json({

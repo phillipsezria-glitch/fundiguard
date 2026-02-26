@@ -1,16 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { clerkClient } from '@clerk/express';
-
-// Extend Express Request to include user info
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: string;
-      user?: any;
-      clerkToken?: string;
-    }
-  }
-}
+import { clerkClient, verifyToken } from '@clerk/express';
 
 /**
  * Middleware to verify Clerk JWT tokens
@@ -20,28 +9,38 @@ export async function clerkAuthMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
-) {
+): Promise<void> {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
-      return res.status(401).json({ error: 'No authorization token provided' });
+      res.status(401).json({ error: 'No authorization token provided' });
+      return;
     }
 
-    // Verify token with Clerk
-    const decoded = await clerkClient.verifyToken(token);
+    // Verify token with Clerk using secretKey
+    const decoded = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
     
+    if (!decoded || !decoded.sub) {
+      res.status(401).json({ error: 'Invalid token' });
+      return;
+    }
+
+    // Set userId on request for compatibility
     req.userId = decoded.sub;
-    req.clerkToken = token;
     
     // Fetch full user data from Clerk
     const user = await clerkClient.users.getUser(decoded.sub);
-    req.user = {
-      id: user.id,
-      email: user.emailAddresses[0]?.emailAddress,
+    
+    // Store in format compatible with existing auth middleware
+    (req as any).user = {
+      userId: user.id,
+      email: user.emailAddresses?.[0]?.emailAddress,
       name: user.fullName,
-      phone: user.phoneNumbers[0]?.phoneNumber,
-      role: user.unsafeMetadata?.role || 'client',
+      phone: user.phoneNumbers?.[0]?.phoneNumber,
+      role: (user.unsafeMetadata?.role as string) || 'client',
     };
 
     next();
@@ -57,25 +56,29 @@ export async function clerkAuthMiddleware(
  */
 export async function clerkAuthOptional(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
-) {
+): Promise<void> {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (token) {
-      const decoded = await clerkClient.verifyToken(token);
-      req.userId = decoded.sub;
-      req.clerkToken = token;
+      const decoded = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY,
+      });
       
-      const user = await clerkClient.users.getUser(decoded.sub);
-      req.user = {
-        id: user.id,
-        email: user.emailAddresses[0]?.emailAddress,
-        name: user.fullName,
-        phone: user.phoneNumbers[0]?.phoneNumber,
-        role: user.unsafeMetadata?.role || 'client',
-      };
+      if (decoded && decoded.sub) {
+        req.userId = decoded.sub;
+        
+        const user = await clerkClient.users.getUser(decoded.sub);
+        (req as any).user = {
+          userId: user.id,
+          email: user.emailAddresses?.[0]?.emailAddress,
+          name: user.fullName,
+          phone: user.phoneNumbers?.[0]?.phoneNumber,
+          role: (user.unsafeMetadata?.role as string) || 'client',
+        };
+      }
     }
   } catch (error) {
     // Silently fail, user will just be undefined
@@ -89,11 +92,13 @@ export async function clerkAuthOptional(
  * Check if user has required role
  */
 export function requireRole(roles: string[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ 
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const user = (req as any).user;
+    if (!user || !user.role || !roles.includes(user.role)) {
+      res.status(403).json({ 
         error: `This action requires ${roles.join(' or ')} role` 
       });
+      return;
     }
     next();
   };
