@@ -1,6 +1,6 @@
 import express from 'express';
 import * as jobController from '../controllers/jobController';
-import { authMiddleware } from '../middleware/auth';
+import { clerkAuthMiddleware } from '../middleware/clerkAuth';
 
 const router = express.Router();
 
@@ -24,18 +24,18 @@ router.get('/search', jobController.searchJobs);
 router.get('/category/:category', jobController.getJobsByCategory);
 
 // Create new job (protected)
-router.post('/', authMiddleware, jobController.createJob);
+router.post('/', clerkAuthMiddleware, jobController.createJob);
 
 // Get user's jobs (protected)
-router.get('/user/my-jobs', authMiddleware, jobController.getUserJobs);
+router.get('/user/my-jobs', clerkAuthMiddleware, jobController.getUserJobs);
 
 // Get job by ID
 router.get('/:id', jobController.getJob);
 
 // Update job (protected)
-router.put('/:id', authMiddleware, jobController.updateJob);
+router.put('/:id', clerkAuthMiddleware, jobController.updateJob);
 
 // Delete/cancel job (protected)
-router.delete('/:id', authMiddleware, jobController.deleteJob);
+router.delete('/:id', clerkAuthMiddleware, jobController.deleteJob);
 
 export default router;

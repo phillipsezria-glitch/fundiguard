@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useUser, useAuth } from "@clerk/nextjs";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Link from "next/link";
@@ -10,7 +11,6 @@ import RatingStars from "../components/ui/RatingStars";
 import Modal from "../components/ui/Modal";
 import BidsList from "../components/BidsList";
 import { api } from "../lib/api";
-import { useAuthProtected } from "../lib/useAuthProtected";
 
 interface Job {
   id: string;
@@ -35,34 +35,71 @@ const statusColors: Record<string, { bg: string; color: string; label: string }>
 };
 
 export default function DashboardPage() {
-  useAuthProtected(); // Protect this route
-
+  const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const router = useRouter();
+  
   const [tab, setTab] = useState("active");
   const [showReleaseModal, setShowReleaseModal] = useState(false);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+  }, [isLoaded, user, router]);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!isLoaded || !user) return;
+      
       try {
         setLoading(true);
-        const token = localStorage.getItem("authToken");
-        const userData = localStorage.getItem("user");
+        const token = await getToken();
 
-        if (!token || !userData) {
+        if (!token) {
           router.push("/auth");
           return;
         }
 
-        setUser(JSON.parse(userData));
+        // Fetch user's jobs from Supabase via backend
+        const jobsResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/jobs`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        // Fetch user's jobs
-        const jobsResponse = await api.jobs.list(token, 1, 10);
-        setJobs(jobsResponse.jobs || []);
+        if (!jobsResponse.ok) {
+          throw new Error("Failed to load jobs");
+        }
+
+        const jobsData = await jobsResponse.json();
+        setJobs(jobsData.data || []);
+
+        // Fetch user profile from backend
+        const profileResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setUserProfile(profileData.user);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load dashboard");
         console.error("Dashboard error:", err);
@@ -72,12 +109,12 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [router]);
+  }, [isLoaded, user, getToken, router]);
 
   const activeJobs = jobs.filter((j) => !["completed", "cancelled"].includes(j.status));
   const pastJobs = jobs.filter((j) => j.status === "completed");
 
-  if (loading) {
+  if (!isLoaded || loading) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Header />
@@ -127,9 +164,9 @@ export default function DashboardPage() {
           <div>
             <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", marginBottom: 4 }}>Welcome back 👋</div>
             <h1 style={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.6rem", color: "white", marginBottom: 6 }}>
-              {user?.full_name || "User"}
+              {userProfile?.full_name || user?.fullName || "User"}
             </h1>
-            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>📍 {user?.location || "Kenya"} • Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "2026"}</div>
+            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>📍 {userProfile?.location || "Kenya"} • Member since {userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : "2026"}</div>
           </div>
           <Link href="/post-job" style={{ textDecoration: "none" }}>
             <Button variant="primary" style={{ background: "white", color: "var(--green)" }}>
