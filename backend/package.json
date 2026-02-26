@@ -12,6 +12,7 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
+    "@clerk/express": "^1.7.74",
     "@supabase/supabase-js": "^2.38.0",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
