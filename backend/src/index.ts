@@ -15,17 +15,32 @@ dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middleware - CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3000',
-  'https://fundiguard.vercel.app',
-  'https://fundiguard.ke',
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-  ...(process.env.PRODUCTION_URL ? [process.env.PRODUCTION_URL] : []),
-];
+const getallowedOrigins = () => {
+  const baseOrigins =
+    NODE_ENV === 'production'
+      ? ['https://fundiguard.ke', 'https://www.fundiguard.ke']
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://127.0.0.1:3000',
+        ];
+
+  const envOrigins = [
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(o => o.trim()) : []),
+  ];
+
+  return [...new Set([...baseOrigins, ...envOrigins])]; // Remove duplicates
+};
+
+const allowedOrigins = getallowedOrigins();
+
+if (NODE_ENV === 'development') {
+  console.log('⚙️  CORS Origins:', allowedOrigins);
+}
 
 app.use(cors({
   origin: allowedOrigins,
