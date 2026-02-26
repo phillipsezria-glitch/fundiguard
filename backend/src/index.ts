@@ -8,6 +8,7 @@ import bookingRoutes from './routes/bookings';
 import paymentRoutes from './routes/payments';
 import bidRoutes from './routes/bidRoutes';
 import userRoutes from './routes/users';
+import clerkUsersRoutes from './routes/users-clerk';
 import uploadRoutes from './routes/upload';
 import { errorHandler } from './middleware/auth';
 
@@ -70,6 +71,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/bids', bidRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/users', clerkUsersRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Health check

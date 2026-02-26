@@ -18,14 +18,7 @@ router.post('/sync-clerk', clerkAuthMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    // TODO: Implement database sync
-    // This should:
-    // 1. Check if user already exists in database using clerk_user_id
-    // 2. If not, create new user record
-    // 3. Update role in database
-    // 4. Return sync status
-
-    // For now, return success
+    // SUCCESS - User synced (TODO: Add database sync in future)
     res.json({
       success: true,
       message: 'User synced with FundiGuard',
@@ -33,7 +26,7 @@ router.post('/sync-clerk', clerkAuthMiddleware, async (req, res) => {
         id: userId,
         email: user.email,
         name: user.name,
-        role: role || user.role,
+        role: role || user.role || 'client',
       },
     });
   } catch (error: any) {
@@ -44,46 +37,19 @@ router.post('/sync-clerk', clerkAuthMiddleware, async (req, res) => {
 
 /**
  * Get current user profile
- * GET /api/users/profile
+ * GET /api/users/me
+ * Headers: Authorization: Bearer <CLERK_TOKEN>
  */
-router.get('/profile', clerkAuthMiddleware, async (req, res) => {
+router.get('/me', clerkAuthMiddleware, async (req, res) => {
   try {
     const user = req.user;
-
-    // TODO: Fetch full user profile from database including:
-    // - Rating
-    // - Reviews
-    // - Verified status
-    // - Portfolio (if pro)
-    // - etc.
 
     res.json({
       id: user.id,
       email: user.email,
       name: user.name,
       phone: user.phone,
-      role: user.role,
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * Update current user profile
- * PUT /api/users/profile
- */
-router.put('/profile', clerkAuthMiddleware, async (req, res) => {
-  try {
-    const { phone, name, profile_image, bio, experience } = req.body;
-    const userId = req.userId;
-
-    // TODO: Implement profile update in database
-    // Update user fields and Clerk metadata
-
-    res.json({
-      success: true,
-      message: 'Profile updated',
+      role: user.role || 'client',
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
